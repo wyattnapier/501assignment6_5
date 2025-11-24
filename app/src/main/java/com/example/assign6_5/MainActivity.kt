@@ -59,32 +59,34 @@ class MainActivity : ComponentActivity() {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
 
+        val lastKnownLocation = mutableStateOf<Location?>(null)
+
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    setContent {
-                        MapDemoTheme {
-                            // A surface container using the 'background' color from the theme
-                            Surface(
-                                modifier = Modifier.fillMaxSize(),
-                                color = MaterialTheme.colorScheme.background
-                            ) {
-                                MainScreen(location)
-                            }
-                        }
-                    }
+                    // Update Jetpack Compose state, not setContent()
+                    lastKnownLocation.value = location
                 }
             }
         }
 
         setContent {
-            MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    com.example.assign6_5.RequestPermissions(
+            MapDemoTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // Start permissions + location updates
+                    RequestPermissions(
                         fusedLocationClient,
                         locationRequest,
                         locationCallback
                     )
+
+                    // Only show the map when we have a location
+                    lastKnownLocation.value?.let { loc ->
+                        MainScreen(loc)
+                    }
                 }
             }
         }
